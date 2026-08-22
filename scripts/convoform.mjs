@@ -141,7 +141,9 @@ _syncDraftFromForm() {
     const index = Number(indexStr);
 
     if (!participantsByIndex[index]) {
-      participantsByIndex[index] = { name: "", image: "", actor: "", isRevealed: true };
+      // isRevealed defaults false: an unchecked checkbox is omitted from
+      // form data entirely, so absence here means "unchecked", not "unset"
+      participantsByIndex[index] = { name: "", image: "", actor: "", isRevealed: false };
     }
 
     participantsByIndex[index][field] = value;
@@ -156,7 +158,7 @@ _syncDraftFromForm() {
         name: (p.name ?? "").trim(),
         image: p.image || "",
         actor: p.actor || "",
-        isRevealed: p.isRevealed || true
+        isRevealed: Boolean(p.isRevealed)
       };
     });
 
@@ -234,11 +236,13 @@ static async _handleSubmit(event, form, formData) {
       const index = Number(indexStr);
 
       if (!participantsByIndex[index]) {
+        // isRevealed defaults false: an unchecked checkbox is omitted from
+        // form data entirely, so absence here means "unchecked", not "unset"
         participantsByIndex[index] = {
           name: "",
           image: "",
           actor: "",
-          isRevealed: true
+          isRevealed: false
         };
       }
 
