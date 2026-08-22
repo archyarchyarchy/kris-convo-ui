@@ -1,0 +1,32 @@
+{
+  "id": "kris-convo-ui",
+"title": "Kris' Conversation UI",
+"description": "A simple conversation UI inspired by a better one by Saervicus found here: https://github.com/CristianVasile23/conversation-hud",
+"version": "0.0.1",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "esmodules": [
+    "scripts/main.mjs"
+  ],
+  "styles": [
+    "styles/main.css",
+    "styles/convo.css",
+    "styles/party.css"
+  ],
+  "templates": [
+    "templates/create-conversation.hbs",
+    "templates/load-conversation.hbs"
+  ],
+  "flags": {
+    "allowHookEval": true
+  },
+  "socket": true,
+  "url": "https://github.com/archyarchyarchy/kris-convo-ui",
+  "manifest": "https://github.com/archyarchyarchy/kris-convo-ui/releases/latest/download/module.json",
+  "download": "https://github.com/archyarchyarchy/kris-convo-ui/releases/download/v0.0.1/module.zip",
+  "license": "LICENSE",
+  "readme": "README.md",
+  "bugs": "https://github.com/archyarchyarchy/kris-convo-ui/issues"
+}

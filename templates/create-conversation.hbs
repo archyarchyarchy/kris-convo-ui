@@ -1,0 +1,105 @@
+{{!-- modules/your-module/templates/create-conversation.hbs --}}
+
+<section class="form-body">
+
+  {{!-- Conversation: Name --}}
+  <div class="form-group">
+    <label>Name</label>
+    <input type="text" name="name" value="{{draft.name}}" placeholder="Conversation name">
+  </div>
+
+  {{!-- Conversation: Background (image picker) --}}
+  <div class="form-group">
+    <label>Background</label>
+    <div class="form-fields">
+      <input type="text" name="background" value="{{draft.background}}" placeholder="assets/bg.png">
+      <button type="button"
+              class="file-picker"
+              data-action="pick-image"
+              data-target='input[name="background"]'
+              title="Choose Image">
+        <i class="fas fa-file-image"></i>
+      </button>
+    </div>
+    {{#if draft.background}}
+      <div class="preview">
+        <img src="{{draft.background}}" alt="Background preview" style="max-height: 80px;">
+      </div>
+    {{/if}}
+  </div>
+
+  <hr>
+
+  {{!-- Participants header + add --}}
+  <header class="flexrow" style="align-items:center; gap:.5rem;">
+    <h3 class="flex1">Participants</h3>
+    <button type="button" class="dialog-button" data-action="add-participant">
+      <i class="fas fa-plus"></i> Add Participant
+    </button>
+  </header>
+
+  {{!-- Participants list --}}
+  <ol class="participants-list">
+    {{#each draft.participants as |p idx|}}
+      <li class="participant-row" data-index="{{idx}}">
+        <div class="form-group">
+          <label>Actor (optional)</label>
+          <select name="participants[{{idx}}][actor]" data-action="pick-actor">
+            <option value="" {{#unless p.actor}}selected{{/unless}}>(none)</option>
+            {{#each ../actors as |a|}}
+              <option value="{{a.uuid}}" {{#if (eq a.uuid p.actor)}}selected{{/if}}>
+                {{a.name}} [{{a.type}}]
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Name (Leave blank to dynamically fetch from Actor)</label>
+          <input type="text" name="participants[{{idx}}][name]" value="{{p.name}}">
+        </div>
+
+        <div class="form-group">
+          <label>Image (Leave blank to dynamically fetch from Actor)</label>
+          <div class="form-fields">
+            <input type="text" name="participants[{{idx}}][image]" value="{{p.image}}">
+            <button type="button"
+                    class="file-picker"
+                    data-action="pick-image"
+                    data-target='input[name="participants[{{idx}}][image]"]'
+                    title="Choose Image">
+                <i class="fas fa-file-image"></i>
+            </button>
+          </div>
+          {{#if p.image}}
+            <div class="preview">
+              <img src="{{p.image}}" alt="Image preview" style="max-height: 60px;">
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox">
+            <input type="checkbox" name="participants[{{idx}}][isRevealed]" {{checked p.isRevealed}}>
+            Is Revealed
+          </label>
+          <p class="hint">If checked, this participant starts visible to players.</p>
+        </div>
+
+        <!-- TODO: Duplicate? -->
+
+        <div class="form-group">
+          <button type="button" class="danger" data-action="remove-participant" data-index="{{idx}}">
+            <i class="fas fa-trash"></i> Remove
+          </button>
+        </div>
+
+        <hr>
+      </li>
+    {{/each}}
+  </ol>
+
+  <footer class="form-footer">
+    <button type="submit" class="dialog-button default">{{#if isEditing}}Update{{else}}Update{{/if}}</button>
+  </footer>
+</section>

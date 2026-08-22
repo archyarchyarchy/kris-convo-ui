@@ -1,0 +1,141 @@
+/* Container that defines the overall card footprint */
+.hud-card {
+  aspect-ratio: 1 / 1;     /* keeps it square (Foundry runs on Chromium so you're fine) */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);        /* fallback bg behind image */
+  font-family: var(--font-primary, sans-serif);
+  /* optional: visual border */
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+/* The main clickable region with the portrait */
+.hud-card-main {
+  position: relative;
+  flex: 1 1 auto;          /* take all remaining space above the banner */
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* so the image can crop inside */
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+/* The portrait itself */
+.hud-card-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;       /* fill the square, crop overflow */
+  object-position: center; /* keep subject centered */
+  display: block;
+  pointer-events: none;    /* so clicking the img still triggers .hud-card-main button */
+  user-select: none;
+}
+
+/* The banner bar at the bottom */
+.hud-card-banner {
+  flex: 0 0 24px;          /* fixed height, change as desired */
+  line-height: 24px;       /* vertically center text in that 24px bar */
+  width: 100%;
+  padding: 0 6px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;     /* single line, no wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis; /* ... if name is too long */
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.hud-card-banner:hover {
+    color: rgb(252, 245, 156);
+}
+
+.hud-card-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.hud-card-highlight {
+  border: 1px solid rgba(250, 255, 201, 0.678); /* border */
+  box-shadow: 0 0 8px rgba(255, 251, 192, 0.4); /* gentle outer glow */
+  transition: box-shadow 0.2s ease, border-color 0.2s ease; /**/
+}
+
+.convoui-background {
+    position: absolute;
+    object-fit: cover;
+    object-position: center;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Overlay control — anchored to the top-right, above image & banner */
+.hud-card-topbtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;          /* change to left: 4px if you prefer */
+  z-index: 5;          /* above image and banner */
+  pointer-events: all; /* ensure it receives clicks */
+
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1;
+  color: #fff;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hud-card-topbtn:hover {
+  background: rgba(0,0,0,0.7);
+}
+
+.hud-card-sidebtn {
+  position: absolute;
+  top: 50%;                 /* center vertically */
+  left: 100%;               /* start at right edge */
+  transform: translate(6px, -50%); /* nudge out and center */
+  z-index: 5;
+  pointer-events: all;
+
+  padding: 4px 6px;
+  font-size: 12px;
+  line-height: 1;
+  color: #fff;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}

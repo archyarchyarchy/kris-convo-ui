@@ -1,0 +1,35 @@
+{{!-- modules/your-module/templates/load-conversation.hbs --}}
+
+<section class="form-body">
+  <div class="form-group">
+    <label>Select a Conversation to Load</label>
+
+    {{#if conversations.length}}
+      <div class="form-fields">
+        <select name="selectedId" required style="width: 100%;">
+          <option value="">-- pick one --</option>
+          {{#each conversations as |conv|}}
+            <option value="{{conv.id}}">
+              {{conv.name}}
+            </option>
+          {{/each}}
+        </select>
+
+        <button type="button"
+                class="dialog-button"
+                data-action="refresh-list"
+                title="Refresh list">
+          <i class="fas fa-rotate"></i>
+        </button>
+      </div>
+    {{else}}
+      <p style="color: var(--color-text-light, #999); font-style: italic;">
+        No saved conversations were found.
+      </p>
+    {{/if}}
+  </div>
+
+  <footer class="form-footer" style="margin-top: 1rem;">
+    <button type="submit" class="dialog-button default">Load</button>
+  </footer>
+</section>

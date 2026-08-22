@@ -1,0 +1,148 @@
+/* Inline input + picker button */
+.kris-convo-ui .form-group .form-fields {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;            /* space between input & icon button */
+}
+
+.kris-convo-ui .form-group .form-fields > input[type="text"] {
+  flex: 1;                /* input takes remaining width */
+  min-width: 0;           /* prevent overflow in flex */
+}
+
+/* Make the picker a tidy square icon button */
+.kris-convo-ui .form-group .form-fields .file-picker {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid var(--color-border, #8883);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Make only the participants list scroll inside the form */
+.kris-convo-ui.create-conversation .participants-list {
+  max-height: 300px;      /* adjust for your window height */
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0;
+  padding-right: 0.5rem;  /* small space for scrollbar */
+  list-style: none;
+}
+
+/* Keep each participant visually separated */
+.kris-convo-ui.create-conversation .participant-row {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border-light, #4443);
+}
+
+/* Optional: nicer scrollbar in Foundry's theme */
+.kris-convo-ui.create-conversation .participants-list::-webkit-scrollbar {
+  width: 6px;
+}
+.kris-convo-ui.create-conversation .participants-list::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb, #8886);
+  border-radius: 3px;
+}
+
+.convoui-convo-wrapper {
+    position: relative;
+    width: 100vw;
+    height: auto;
+    display: flex;
+    place-items: center;
+    justify-content: center;
+    overflow: visible;
+    padding: 16px;
+}
+
+.convoui-center {
+    position: relative;
+    overflow: visible;
+    padding-right: 16px;
+    padding-left: 16px;
+}
+
+.convoui-left, .convoui-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    overflow-y: auto;
+    overflow-x: visible;
+    width: 100%;
+    height: 100%;
+    min-width:max-content;
+}
+
+.convoui-left {
+    align-items: flex-end;
+    /*
+    if collapsed:
+    width: auto;
+
+    */
+}
+
+.convoui-right {
+    align-items: flex-start;
+}
+
+.convoui-npc {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  overflow: visible;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: height 0.3s ease;
+  pointer-events: all;
+  flex-shrink: 0;
+  aspect-ratio: 1/1;
+}
+
+.convoui-npc-dim {
+  opacity: 0.6;
+}
+
+.convoui-npc::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0) 65%, rgb(0, 0, 0) 100%);
+}
+
+.convoui-speakernpc {
+  max-height: 600px;
+  min-height: 300px;
+  position: relative;
+  overflow: visible;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: height 0.3s ease;
+  pointer-events: all;
+  aspect-ratio: 3/4;
+}
+
+.convoui-speakernpc::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0) 65%, rgb(0, 0, 0) 100%);
+}
+
+.kris-convo-ui.create-conversation {
+  width: 700px;
+  min-width: 400px;
+  max-width: 90vw;
+  height: auto;
+  min-height: 400px;
+}
