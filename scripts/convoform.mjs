@@ -274,9 +274,6 @@ static async _handleSubmit(event, form, formData) {
       }
     }
 
-    if (game.krisconvoui.conversation != null) {
-      await SaveConversation(game.krisconvoui.conversation);
-    }
     game.krisconvoui.conversation = newConversation;
     const saved = await SaveConversation(newConversation);
     updateConvoUI()
