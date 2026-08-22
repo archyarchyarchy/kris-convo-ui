@@ -81,62 +81,14 @@
 
 .convoui-left {
     align-items: flex-end;
-    /*
-    if collapsed:
-    width: auto;
-
-    */
 }
 
 .convoui-right {
     align-items: flex-start;
 }
 
-.convoui-npc {
-  width: 120px;
-  height: 120px;
-  position: relative;
-  overflow: visible;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: height 0.3s ease;
-  pointer-events: all;
-  flex-shrink: 0;
-  aspect-ratio: 1/1;
-}
-
 .convoui-npc-dim {
   opacity: 0.6;
-}
-
-.convoui-npc::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0) 65%, rgb(0, 0, 0) 100%);
-}
-
-.convoui-speakernpc {
-  max-height: 600px;
-  min-height: 300px;
-  position: relative;
-  overflow: visible;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: height 0.3s ease;
-  pointer-events: all;
-  aspect-ratio: 3/4;
-}
-
-.convoui-speakernpc::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0) 65%, rgb(0, 0, 0) 100%);
 }
 
 .kris-convo-ui.create-conversation {

@@ -97,29 +97,6 @@
     overflow: hidden;
 }
 
-/* Overlay control — anchored to the top-right, above image & banner */
-.hud-card-topbtn {
-  position: absolute;
-  top: 4px;
-  right: 4px;          /* change to left: 4px if you prefer */
-  z-index: 5;          /* above image and banner */
-  pointer-events: all; /* ensure it receives clicks */
-
-  padding: 2px 6px;
-  font-size: 12px;
-  line-height: 1;
-  color: #fff;
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 4px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.hud-card-topbtn:hover {
-  background: rgba(0,0,0,0.7);
-}
-
 .hud-card-sidebtn {
   position: absolute;
   top: 50%;                 /* center vertically */
