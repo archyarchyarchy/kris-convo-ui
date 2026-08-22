@@ -140,7 +140,7 @@ export function updateConvoUI() {
                 if (speaker) {
                     const actor = fromUuidSync(speaker.actor);
 
-                    if (actor.testUserPermission(game.user, "LIMITED")) {
+                    if (actor && actor.testUserPermission(game.user, "LIMITED")) {
                         event.preventDefault();
                         actor.sheet.render(true);
                     }
