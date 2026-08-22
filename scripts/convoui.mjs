@@ -84,6 +84,32 @@ function renderSpeakerPanel(conversation) {
 }
 
 /**
+ * Recomputes and applies "isCollapsed"-dependent visual state: background
+ * brightness, whether NPC panels are hidden, and the button panel's anchor
+ * width. isCollapsed depends on whether there's a current speaker (not just
+ * the manual collapse toggle), so this needs to re-run on every speaker
+ * change, not just on the manual collapse button and full rebuilds.
+ */
+function applyCollapsedState(conversation) {
+    const isCollapsed = game.krisconvoui.convoIsCollapsed || conversation == null || !conversation.getSpeaker()
+
+    const background_element = document.getElementById("convoui-background");
+    if (background_element) {
+        background_element.style.filter = !isCollapsed ? "brightness(0.6)" : "brightness(1.0)";
+    }
+
+    const participant_panels = document.querySelectorAll(".convoui-speakernpc");
+    participant_panels.forEach(panel => {
+        panel.toggleAttribute("hidden", (isCollapsed || !game.krisconvoui.FLAG_USE_CONVOUI))
+    });
+
+    const buttons_panel = document.getElementById("convoui-panel-buttons")
+    if (buttons_panel) {
+        buttons_panel.style.width = isCollapsed || conversation === null || !game.krisconvoui.FLAG_USE_CONVOUI ? "auto" : "100%"
+    }
+}
+
+/**
  * Rebuilds the speaker card and toggles dim/highlight classes on the
  * existing participant cards, without rebuilding the participant panel.
  * Safe to use in place of updateConvoUI() specifically for setSpeaker()/
@@ -95,6 +121,7 @@ export function refreshSpeakerHighlight() {
 
     const conversation = game.krisconvoui.conversation;
     renderSpeakerPanel(conversation);
+    applyCollapsedState(conversation);
 
     const participant_panel = document.getElementById("convoui-panel-participant");
     if (!participant_panel) return;
@@ -111,11 +138,10 @@ export function updateConvoUI() {
     //game.krisconvoui.conversation = LoadConversationById(game.krisconvoui.conversation.id)
     console.log("[ConvoUI] UpdateConvoUI()")
     const conversation = game.krisconvoui.conversation
-    const isCollapsed = game.krisconvoui.convoIsCollapsed || conversation == null || !conversation.getSpeaker()
     //console.log(conversation)
 
     if (!game.krisconvoui.FLAG_USE_CONVOUI) {
-        return; 
+        return;
     }
 
     // DISPLAY BACKGROUND
@@ -134,13 +160,6 @@ export function updateConvoUI() {
 
         background_element.src = conversation.background;
         background_element.toggleAttribute("hidden", conversation.background == "");
-
-        if (!isCollapsed) {
-            background_element.style.filter = "brightness(0.6)";
-        }
-        else {
-            background_element.style.filter = "brightness(1.0)";
-        }
     }
 
 
@@ -240,13 +259,5 @@ export function updateConvoUI() {
         }
     }
 
-    // Handle Collapsed Status
-    //const convo_wrapper = document.getElementById("convoui-convo-wrapper");
-    const participant_panels = document.querySelectorAll(".convoui-speakernpc");
-    participant_panels.forEach(panel => {
-        panel.toggleAttribute("hidden", (isCollapsed || !game.krisconvoui.FLAG_USE_CONVOUI))
-    });
-
-    const buttons_panel = document.getElementById("convoui-panel-buttons")
-    buttons_panel.style.width = isCollapsed || game.krisconvoui.conversation === null || !game.krisconvoui.FLAG_USE_CONVOUI ? "auto" : "100%"
+    applyCollapsedState(conversation);
 }
