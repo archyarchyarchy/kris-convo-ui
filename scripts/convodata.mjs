@@ -320,10 +320,23 @@ export function broadcastConversation() {
     if (!game.user.isGM) return;
     const SOCKCHANNEL = game.krisconvoui.SOCKCHANNEL
 
+    const conversation = game.krisconvoui.conversation;
+    // Redact unrevealed participants' data instead of sending it over the
+    // socket, since clients receive this regardless of whether the UI
+    // renders it. Keeps the array shape/indices unchanged.
+    const payload = conversation == null
+        ? null
+        : {
+            ...conversation,
+            participants: conversation.participants.map(p =>
+                p.isRevealed ? p : { name: "", image: "", actor: "", isRevealed: false }
+            )
+        };
+
     console.log("[ConvoUI] Emitted convo-sync")
     game.socket.emit(SOCKCHANNEL, {
-        t: "convo-sync", 
-        convo: JSON.stringify(game.krisconvoui.conversation)
+        t: "convo-sync",
+        convo: JSON.stringify(payload)
     });
 }
 
