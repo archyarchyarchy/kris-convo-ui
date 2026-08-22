@@ -1,5 +1,6 @@
 import { Participant, Conversation, LoadConversationById } from "./convodata.mjs";
 import { openSheetForName } from "./sheetlookup.mjs";
+import { buildHudCard } from "./hudcard.mjs";
 
 export async function initializeConvoUI() {
     const MOD = game.krisconvoui.MODULE
@@ -58,56 +59,26 @@ function renderSpeakerPanel(conversation) {
     if (conversation != null && conversation.getSpeaker() && !game.krisconvoui.convoIsCollapsed) {
         const speaker = conversation.getSpeaker()
 
-        // Create card
-        const speaker_card = document.createElement("div");
-        speaker_card.className = "hud-card";
-        //speaker_card.classList.add("hud-card-highlight");
-        speaker_card.style.width = "350px"
-        speaker_card.style.aspectRatio = "3 / 4"
-
-        // Add image wrapper
-        const image_card = document.createElement("div");
-        image_card.className = "hud-card-main";
-
-        if (game.user.isGM) {
-            image_card.addEventListener('click', () => {
+        const speaker_card = buildHudCard({
+            width: "350px",
+            aspectRatio: "3 / 4",
+            image: speaker?.getImage(),
+            placeholderText: "No Speaker",
+            name: speaker?.getName(),
+            showBanner: Boolean(speaker),
+            onImageClick: game.user.isGM ? () => {
                 conversation.clearSpeaker()
                 refreshSpeakerHighlight()
-            });
-        }
+            } : null,
+            onBannerClick: (event) => {
+                const currentSpeaker = game.krisconvoui.conversation.getSpeaker();
+                if (!currentSpeaker) return;
 
-        if (speaker != null) {
-            // Add image
-            const image_element = document.createElement("img");
-            //image_element.classList.add("hud-card-banner") - No Class needed
-            image_element.src = speaker.getImage();
-            image_element.alt = speaker.getName();
-            image_card.appendChild(image_element);
-            speaker_card.appendChild(image_card);
+                const actor = fromUuidSync(currentSpeaker.actor);
+                openSheetForName(event, actor, currentSpeaker.getName());
+            }
+        });
 
-            // Add banner
-            const banner_element = document.createElement("div");
-            banner_element.classList.add("hud-card-banner")
-            banner_element.textContent = speaker.getName();
-            speaker_card.appendChild(banner_element);
-
-            banner_element.addEventListener('click', (event) => {
-                const speaker = game.krisconvoui.conversation.getSpeaker();
-                if (!speaker) return;
-
-                const actor = fromUuidSync(speaker.actor);
-                openSheetForName(event, actor, speaker.getName());
-            });
-        }
-        else {
-            const noSpeakerDiv = document.createElement("div");
-            noSpeakerDiv.classList.add("hud-card-empty");
-            noSpeakerDiv.textContent = "No Speaker";
-            image_card.appendChild(noSpeakerDiv);
-            speaker_card.appendChild(image_card);
-        }
-
-        // Add to wrapper
         speaker_panel.appendChild(speaker_card);
     }
 }
@@ -190,58 +161,38 @@ export function updateConvoUI() {
 
     if (conversation != null) {
         conversation.participants.forEach((participant, index) => {
-            if (participant.isRevealed) {
-                // Create card
-                const character_card = document.createElement("div");
-                character_card.className = "hud-card";
-                character_card.style.width = "100px";
-                character_card.style.height = "124px";
-                character_card.dataset.actor = participant?.actor || "";
-                character_card.dataset.name = participant.getName();
-                character_card.dataset.index = index;
+            if (!participant.isRevealed) return;
 
-                // Allow button to hover next to the element
-                character_card.style.position = "relative";
-                character_card.style.overflow = "visible";
+            const speaker = conversation.getSpeaker();
 
-                // Dim if not speaker
-                if (conversation.getSpeaker() && conversation.getSpeaker() != participant) {
-                    character_card.classList.add("convoui-npc-dim")
-                }
-                else if (conversation.getSpeaker() == participant) {
-                    character_card.classList.add("hud-card-highlight");
-                }
+            const character_card = buildHudCard({
+                width: 100,
+                height: 124,
+                image: participant.getImage(),
+                name: participant.getName(),
+                dimmed: !!speaker && speaker !== participant,
+                highlighted: speaker === participant,
+                dataset: { actor: participant?.actor || "", name: participant.getName(), index },
+                onImageClick: game.user.isGM ? () => {
+                    const idx = conversation.participants.indexOf(participant);
+                    if (idx != null) {
+                        if (idx == conversation.speaker) {
+                            conversation.clearSpeaker()
+                        }
+                        else {
+                            conversation.setSpeaker(idx)
+                        }
 
-                // Add image wrapper
-                const image_card = document.createElement("div");
-                image_card.className = "hud-card-main";
-
-                // Add image
-                const image_element = document.createElement("img");
-                //image_element.classList.add("hud-card-banner") - No Class needed
-                image_element.src = participant.getImage();
-                image_element.alt = participant.getName();
-                image_card.appendChild(image_element);
-                character_card.appendChild(image_card);
-
-                // Add banner
-                const banner_element = document.createElement("div");
-                banner_element.classList.add("hud-card-banner")
-                banner_element.textContent = participant.getName();
-                character_card.appendChild(banner_element);
-
-                // Add Hide button
-                if (game.user.isGM) {
-                    // Create button
-                    const topBtn = document.createElement("div");
-                    topBtn.classList.add("hud-card-sidebtn");
-
-                    // Add icon
-                    const icon = document.createElement("i");
-                    icon.classList.add("fas", "fa-eye-slash");
-                    topBtn.appendChild(icon);
-
-                    topBtn.addEventListener("click", (ev) => {
+                        refreshSpeakerHighlight()
+                    }
+                } : null,
+                onBannerClick: (event) => {
+                    const actor = fromUuidSync(participant.actor);
+                    openSheetForName(event, actor, participant.getName());
+                },
+                sideButton: game.user.isGM ? {
+                    iconClass: "fa-eye-slash",
+                    onClick: (ev) => {
                         ev.stopPropagation();
                         // hideParticipant()/clearSpeaker() already broadcast via save()
                         conversation.hideParticipant(participant);
@@ -249,92 +200,42 @@ export function updateConvoUI() {
                             conversation.clearSpeaker();
                         }
                         updateConvoUI();
-                    });
+                    }
+                } : null
+            });
 
-                    // Append last so it sits over all children
-                    character_card.appendChild(topBtn);
-                }
-
-                // Add to wrapper
-                participant_panel.appendChild(character_card);
-
-                if (game.user.isGM) {
-                    image_card.addEventListener('click', () => {
-                        const index = conversation.participants.indexOf(participant);
-                        if (index != null) {
-                            if (index == conversation.speaker) {
-                                conversation.clearSpeaker()
-                            }
-                            else {
-                                conversation.setSpeaker(index)
-                            }
-
-                            refreshSpeakerHighlight()
-                        }
-                    });
-                }
-
-                const thisParticipant = participant;
-
-                banner_element.addEventListener('click', (event) => {
-                    const actor = fromUuidSync(thisParticipant.actor);
-                    openSheetForName(event, actor, thisParticipant.getName());
-                });
-            }
+            participant_panel.appendChild(character_card);
         });
 
         // Hidden Participants for the GM
         if (game.user.isGM) {
             conversation.participants.forEach(participant => {
-                if (!participant.isRevealed) {
-                    // Create card
-                    const character_card = document.createElement("div");
-                    character_card.className = "hud-card";
-                    character_card.style.width = "100px";
-                    character_card.style.height = "24px";
-                    character_card.style.position = "relative";
-                    character_card.style.overflow = "visible";
+                if (participant.isRevealed) return;
 
-                    // Add banner
-                    const banner_element = document.createElement("div");
-                    banner_element.classList.add("hud-card-banner")
-                    banner_element.textContent = participant.getName();
-                    character_card.appendChild(banner_element);
-
-                    // Add Hide button
-                    // Create button
-                    const topBtn = document.createElement("div");
-                    topBtn.classList.add("hud-card-sidebtn");
-
-                    // Add icon
-                    const icon = document.createElement("i");
-                    icon.classList.add("fas", "fa-eye");
-                    topBtn.appendChild(icon);
-
-                    topBtn.addEventListener("click", (ev) => {
-                        ev.stopPropagation();
-                        // revealParticipant()/clearSpeaker() already broadcast via save()
-                        conversation.revealParticipant(participant);
-                        if (conversation.getSpeaker() === participant) {
-                            conversation.clearSpeaker();
+                const character_card = buildHudCard({
+                    width: 100,
+                    height: 24,
+                    showImage: false,
+                    name: participant.getName(),
+                    onBannerClick: (event) => {
+                        const actor = fromUuidSync(participant.actor);
+                        openSheetForName(event, actor, participant.getName());
+                    },
+                    sideButton: {
+                        iconClass: "fa-eye",
+                        onClick: (ev) => {
+                            ev.stopPropagation();
+                            // revealParticipant()/clearSpeaker() already broadcast via save()
+                            conversation.revealParticipant(participant);
+                            if (conversation.getSpeaker() === participant) {
+                                conversation.clearSpeaker();
+                            }
+                            updateConvoUI();
                         }
-                        updateConvoUI();
-                    });
+                    }
+                });
 
-                    // Append last so it sits over all children
-                    character_card.appendChild(topBtn);
-
-                    // Add to wrapper
-                    participant_panel.appendChild(character_card);
-
-                    const thisParticipant = participant;
-
-                    // Add click listener to banner
-                    banner_element.addEventListener('click', (event) => {
-                        const actor = fromUuidSync(thisParticipant.actor);
-                        openSheetForName(event, actor, thisParticipant.getName());
-                    });
-                }
+                participant_panel.appendChild(character_card);
             });
         }
     }

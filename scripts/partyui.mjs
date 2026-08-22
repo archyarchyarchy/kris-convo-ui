@@ -1,4 +1,5 @@
 import { openSheetForName } from "./sheetlookup.mjs";
+import { buildHudCard } from "./hudcard.mjs";
 
 export function initializePartyUI() {
     if (!game.krisconvoui.FLAG_USE_PARTYUI) return;
@@ -49,67 +50,36 @@ export function updatePartyUI() {
     });
 
     sortedActors.forEach(actor => {
-        // Create card
-        const character_card = document.createElement("div");
-        character_card.className = "hud-card";
-
         const portraitWidth = game.settings.get(MOD, "portraitWidth");
         const portraitHeight = isCollapsed ? 24 : game.settings.get(MOD, "portraitHeight");
+        const isCharacter = actor.type.toUpperCase() === "CHARACTER";
 
-        // APPLY SIZE FROM SETTINGS
-        if (actor.type.toUpperCase() != "CHARACTER") {
-            character_card.style.width = `${portraitWidth/2}px`;
-            if (!isCollapsed) {
-                character_card.style.height = `${portraitHeight/2}px`;
-            }
-            else {
-                character_card.style.height = `${portraitHeight}px`;
-            }
-        }
-        else {
-            character_card.style.width = `${portraitWidth}px`;
-            character_card.style.height = `${portraitHeight}px`;
-        }
-        
+        // Non-character actors (vehicles, etc.) get rendered at half size;
+        // when collapsed everyone uses the same small fixed height.
+        const width = isCharacter ? portraitWidth : portraitWidth / 2;
+        const height = isCharacter || isCollapsed ? portraitHeight : portraitHeight / 2;
+
+        const character_card = buildHudCard({
+            width,
+            height,
+            showImage: !isCollapsed,
+            image: actor.img,
+            name: actor.name,
+            showBanner: game.settings.get(MOD, "enableNameBar"),
+            highlighted: actor.testUserPermission(game.user, "OWNER") && !game.user.isGM
+        });
+
         character_card.id = "convoui-" + actor.id;
-
-        // Highlight owned characters
-        if (actor.testUserPermission(game.user, "OWNER") && !game.user.isGM) {
-            character_card.classList.add("hud-card-highlight");
-        }
-
         if (!game.krisconvoui.partySpeakers.includes(actor.id)) {
             character_card.classList.add("convoui-silent");
-        }
-
-        if (!isCollapsed) {
-            // Add image wrapper
-            const image_card = document.createElement("div");
-            image_card.className = "hud-card-main";
-
-            // Add image
-            const image_element = document.createElement("img");
-            //image_element.classList.add("hud-card-banner") - No Class needed
-            image_element.src = actor.img;
-            image_element.alt = actor.name;
-            image_card.appendChild(image_element);
-            character_card.appendChild(image_card);
-        }
-
-        // Add banner
-        const displayNameBar = game.settings.get(MOD, "enableNameBar");
-        if (displayNameBar) {
-            const banner_element = document.createElement("div");
-            banner_element.classList.add("hud-card-banner")
-            banner_element.textContent = actor.name;
-            character_card.appendChild(banner_element);
         }
 
         // Add to wrapper
         party_wrapper.appendChild(character_card);
 
-        const enableSheetClick = game.settings.get(MOD, "enableSheetClick");
-        if (enableSheetClick) {
+        // Unlike the conversation panels, the whole party card (not just
+        // the image or banner) opens the sheet when clicked.
+        if (game.settings.get(MOD, "enableSheetClick")) {
             character_card.addEventListener('click', (event) => {
                 openSheetForName(event, actor, actor.name);
             });
