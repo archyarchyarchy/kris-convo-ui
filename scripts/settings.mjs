@@ -68,18 +68,18 @@ export function initializeSettings() {
     });
 
     initialSettings = {
-        journalButton: game.settings.get(MOD, "enableJournalButton"),
-        journalButton: game.settings.get(MOD, "enableSheetClick"),
-        journalButton: game.settings.get(MOD, "enableNameBar"),
+        enableJournalButton: game.settings.get(MOD, "enableJournalButton"),
+        enableSheetClick: game.settings.get(MOD, "enableSheetClick"),
+        enableNameBar: game.settings.get(MOD, "enableNameBar"),
         portraitWidth: game.settings.get(MOD, "portraitWidth"),
         portraitHeight: game.settings.get(MOD, "portraitHeight"),
     };
 
     Hooks.on("closeSettingsConfig", () => {
     const newSettings = {
-    journalButton: game.settings.get(MOD, "enableJournalButton"),
-    journalButton: game.settings.get(MOD, "enableSheetClick"),
-    journalButton: game.settings.get(MOD, "enableNameBar"),
+    enableJournalButton: game.settings.get(MOD, "enableJournalButton"),
+    enableSheetClick: game.settings.get(MOD, "enableSheetClick"),
+    enableNameBar: game.settings.get(MOD, "enableNameBar"),
     portraitWidth: game.settings.get(MOD, "portraitWidth"),
     portraitHeight: game.settings.get(MOD, "portraitHeight"),
     };
