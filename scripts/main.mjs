@@ -49,7 +49,6 @@ Hooks.once("ready", () => {
         ws.addEventListener("message", (ev) => {
             const SOCKCHANNEL = game.krisconvoui.SOCKCHANNEL
             const data = JSON.parse(ev.data);
-            console.log("Received:", data);
 
             var selectedActor = null
             //const ownedActorUserPairs = [];
@@ -166,18 +165,13 @@ function initializeSockets() {
     const SOCKCHANNEL = game.krisconvoui.SOCKCHANNEL
 
     game.socket.on(SOCKCHANNEL, (msg) => {
-        console.log("[ConvoUI] Received socket message", msg);
-
         switch (msg.t) {
             case "convo-sync": {
                 if (game.user.isGM) break;
-                console.log("[ConvoUI] Received convo-sync")
-                console.debug(msg.convo)
 
                 const parsed = JSON.parse(msg.convo)
 
                 if (parsed == null) {
-                    console.log("[ConvoUI] Socket: Cleared conversation")
                     game.krisconvoui.conversation = null
                 }
                 else {

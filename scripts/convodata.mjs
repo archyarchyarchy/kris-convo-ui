@@ -82,8 +82,7 @@ export class Conversation {
     setSpeaker(index) {
         if (this.speaker == index) return;
 
-        console.log("[ConvoUI] Setting Speaker to " + String(index))
-        if (index >= this.participants.length || index < 0) { 
+        if (index >= this.participants.length || index < 0) {
             this.speaker = -1 
         }
         else {
@@ -137,7 +136,6 @@ export async function SaveConversation(conversation) {
 
     const MOD = game.krisconvoui.MODULE
 
-    console.log("[ConvoUI] SaveConversation(): Saving convo with ID: " + conversation.id)
     var entry = game.journal.getName("ConvoUI")
 
     if (!entry) {
@@ -151,13 +149,10 @@ export async function SaveConversation(conversation) {
 
     var page = null
     if (conversation.id != -1) {
-        console.log("[ConvoUI] SaveConversation(): Conversation has ID " + conversation.id + ", looking for matching page...")
-
         for (const j of getConvoJournals()) {
             for (const p of j.pages) {
                 if (p.id === conversation.id) {
                     page = p;
-                    console.log("[ConvoUI] SaveConversation(): Found the page with ID: " + p.id)
                     break;
                 }
             }
@@ -180,8 +175,6 @@ export async function SaveConversation(conversation) {
         name: conversation.name == "" ? "Unnamed": conversation.name,
         text: { content: JSON.stringify(conversation) },
     });
-
-    console.log("[ConvoUI] Conversation saved to ID: " + page.id);
 
     broadcastConversation(conversation);
 
@@ -307,7 +300,6 @@ export function broadcastConversation() {
             )
         };
 
-    console.log("[ConvoUI] Emitted convo-sync")
     game.socket.emit(SOCKCHANNEL, {
         t: "convo-sync",
         convo: JSON.stringify(payload)

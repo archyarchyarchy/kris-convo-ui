@@ -23,13 +23,11 @@ export function updatePartyUI() {
     const MOD = game.krisconvoui.MODULE;
     const isCollapsed = game.krisconvoui.partyIsCollapsed;
 
-    console.log("[ConvoUI] INFO: Gathering party...")
     const party_wrapper = document.getElementById('convoui-party-wrapper');
     party_wrapper.innerHTML = '';
 
     // LOOP THROUGH ACTORS OWNED BY PLAYERS
     const pcs = game.actors.filter(actor => actor.hasPlayerOwner);
-    console.log("[ConvoUI] INFO: Found " + String(pcs.length) + " party members.")
 
     // Sort actors by their owning player's name (non-GMs only)
     const sortedActors = pcs.sort((a, b) => {

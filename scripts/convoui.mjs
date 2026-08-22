@@ -135,10 +135,7 @@ export function refreshSpeakerHighlight() {
 }
 
 export function updateConvoUI() {
-    //game.krisconvoui.conversation = LoadConversationById(game.krisconvoui.conversation.id)
-    console.log("[ConvoUI] UpdateConvoUI()")
     const conversation = game.krisconvoui.conversation
-    //console.log(conversation)
 
     if (!game.krisconvoui.FLAG_USE_CONVOUI) {
         return;
