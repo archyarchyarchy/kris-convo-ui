@@ -50,6 +50,93 @@ export async function initializeConvoUI() {
     updateConvoUI()
 }
 
+/** Rebuilds just the speaker card. Shared by updateConvoUI() (full rebuild)
+ *  and refreshSpeakerHighlight() (speaker-only updates). */
+function renderSpeakerPanel(conversation) {
+    const speaker_panel = document.getElementById("convoui-panel-speaker")
+    speaker_panel.innerHTML = ""
+
+    if (conversation != null && conversation.getSpeaker() && !game.krisconvoui.convoIsCollapsed) {
+        const speaker = conversation.getSpeaker()
+
+        // Create card
+        const speaker_card = document.createElement("div");
+        speaker_card.className = "hud-card";
+        //speaker_card.classList.add("hud-card-highlight");
+        speaker_card.style.width = "350px"
+        speaker_card.style.aspectRatio = "3 / 4"
+
+        // Add image wrapper
+        const image_card = document.createElement("div");
+        image_card.className = "hud-card-main";
+
+        if (game.user.isGM) {
+            image_card.addEventListener('click', () => {
+                conversation.clearSpeaker()
+                refreshSpeakerHighlight()
+            });
+        }
+
+        if (speaker != null) {
+            // Add image
+            const image_element = document.createElement("img");
+            //image_element.classList.add("hud-card-banner") - No Class needed
+            image_element.src = speaker.getImage();
+            image_element.alt = speaker.getName();
+            image_card.appendChild(image_element);
+            speaker_card.appendChild(image_card);
+
+            // Add banner
+            const banner_element = document.createElement("div");
+            banner_element.classList.add("hud-card-banner")
+            banner_element.textContent = speaker.getName();
+            speaker_card.appendChild(banner_element);
+
+            banner_element.addEventListener('click', (event) => {
+                const speaker = game.krisconvoui.conversation.getSpeaker();
+                if (!speaker) return;
+
+                const actor = fromUuidSync(speaker.actor);
+                openSheetForName(event, actor, speaker.getName());
+            });
+        }
+        else {
+            const noSpeakerDiv = document.createElement("div");
+            noSpeakerDiv.classList.add("hud-card-empty");
+            noSpeakerDiv.textContent = "No Speaker";
+            image_card.appendChild(noSpeakerDiv);
+            speaker_card.appendChild(image_card);
+        }
+
+        // Add to wrapper
+        speaker_panel.appendChild(speaker_card);
+    }
+}
+
+/**
+ * Rebuilds the speaker card and toggles dim/highlight classes on the
+ * existing participant cards, without rebuilding the participant panel.
+ * Safe to use in place of updateConvoUI() specifically for setSpeaker()/
+ * clearSpeaker() -- it does NOT handle participants being added, removed,
+ * revealed, or hidden, since those change which cards need to exist at all.
+ */
+export function refreshSpeakerHighlight() {
+    if (!game.krisconvoui.FLAG_USE_CONVOUI) return;
+
+    const conversation = game.krisconvoui.conversation;
+    renderSpeakerPanel(conversation);
+
+    const participant_panel = document.getElementById("convoui-panel-participant");
+    if (!participant_panel) return;
+
+    const speaker = conversation?.getSpeaker();
+    participant_panel.querySelectorAll("[data-index]").forEach(card => {
+        const participant = conversation?.participants[Number(card.dataset.index)];
+        card.classList.toggle("convoui-npc-dim", !!speaker && speaker !== participant);
+        card.classList.toggle("hud-card-highlight", !!speaker && speaker === participant);
+    });
+}
+
 export function updateConvoUI() {
     //game.krisconvoui.conversation = LoadConversationById(game.krisconvoui.conversation.id)
     console.log("[ConvoUI] UpdateConvoUI()")
@@ -96,71 +183,14 @@ export function updateConvoUI() {
     }
 
     // DISPLAY SPEAKER
-    const speaker_panel = document.getElementById("convoui-panel-speaker")
-    speaker_panel.innerHTML = ""
+    renderSpeakerPanel(conversation);
 
-    if (conversation != null && conversation.getSpeaker() && !game.krisconvoui.convoIsCollapsed) {
-        const speaker = conversation.getSpeaker()
-    
-        // Create card
-        const speaker_card = document.createElement("div");
-        speaker_card.className = "hud-card";
-        //speaker_card.classList.add("hud-card-highlight");
-        speaker_card.style.width = "350px"
-        speaker_card.style.aspectRatio = "3 / 4"
-
-        // Add image wrapper
-        const image_card = document.createElement("div");
-        image_card.className = "hud-card-main";
-
-        if (game.user.isGM) {
-            image_card.addEventListener('click', () => { 
-                conversation.clearSpeaker()
-                updateConvoUI()
-            });
-        }
-
-        if (speaker != null) {
-            // Add image
-            const image_element = document.createElement("img");
-            //image_element.classList.add("hud-card-banner") - No Class needed
-            image_element.src = speaker.getImage();
-            image_element.alt = speaker.getName();
-            image_card.appendChild(image_element);
-            speaker_card.appendChild(image_card);
-
-            // Add banner
-            const banner_element = document.createElement("div");
-            banner_element.classList.add("hud-card-banner")
-            banner_element.textContent = speaker.getName();
-            speaker_card.appendChild(banner_element);
-
-            banner_element.addEventListener('click', (event) => {
-                const speaker = game.krisconvoui.conversation.getSpeaker();
-                if (!speaker) return;
-
-                const actor = fromUuidSync(speaker.actor);
-                openSheetForName(event, actor, speaker.getName());
-            });
-        }
-        else {
-            const noSpeakerDiv = document.createElement("div");
-            noSpeakerDiv.classList.add("hud-card-empty");
-            noSpeakerDiv.textContent = "No Speaker";
-            image_card.appendChild(noSpeakerDiv);
-            speaker_card.appendChild(image_card);
-        }
-
-        // Add to wrapper
-        speaker_panel.appendChild(speaker_card);
-    }
-    
     // DISPLAY PARTICIPANTS
     const participant_panel = document.getElementById("convoui-panel-participant")
     participant_panel.innerHTML = ""
 
     if (conversation != null) {
-        conversation.participants.forEach(participant => {
+        conversation.participants.forEach((participant, index) => {
             if (participant.isRevealed) {
                 // Create card
                 const character_card = document.createElement("div");
@@ -169,6 +199,7 @@ export function updateConvoUI() {
                 character_card.style.height = "124px";
                 character_card.dataset.actor = participant?.actor || "";
                 character_card.dataset.name = participant.getName();
+                character_card.dataset.index = index;
 
                 // Allow button to hover next to the element
                 character_card.style.position = "relative";
@@ -229,7 +260,7 @@ export function updateConvoUI() {
                 participant_panel.appendChild(character_card);
 
                 if (game.user.isGM) {
-                    image_card.addEventListener('click', () => { 
+                    image_card.addEventListener('click', () => {
                         const index = conversation.participants.indexOf(participant);
                         if (index != null) {
                             if (index == conversation.speaker) {
@@ -238,8 +269,8 @@ export function updateConvoUI() {
                             else {
                                 conversation.setSpeaker(index)
                             }
-                            
-                            updateConvoUI()
+
+                            refreshSpeakerHighlight()
                         }
                     });
                 }
