@@ -4,7 +4,7 @@ function requireGM(fnName) {
     return false;
 }
 
-function getConvoJournals() {
+export function getConvoJournals() {
     const MOD = game.krisconvoui.MODULE;
     return game.journal.contents.filter(j => j.flags?.[MOD]?.type === "convo-data");
 }

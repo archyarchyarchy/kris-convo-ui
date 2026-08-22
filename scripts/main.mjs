@@ -125,11 +125,13 @@ export function updateButtonUI() {
             });
 
             const clear_button = document.getElementById("convoui-clear-button")
-            clear_button.addEventListener('click', () => { 
+            clear_button.addEventListener('click', () => {
                 game.krisconvoui.conversation = null;
                 convoUI.updateConvoUI();
                 updateButtonUI();
-                propagateConversation();
+                // Direct assignment to null doesn't go through a self-saving
+                // mutator, so this needs an explicit broadcast to players.
+                convoData.broadcastConversation();
             });
 
             const delete_button = document.getElementById("convoui-delete-button")
@@ -144,7 +146,9 @@ export function updateButtonUI() {
                 game.krisconvoui.conversation = null;
                 convoUI.updateConvoUI();
                 updateButtonUI();
-                propagateConversation();
+                // Deletion doesn't go through a self-saving mutator, so this
+                // needs an explicit broadcast to players.
+                convoData.broadcastConversation();
             });
         }
     }    
@@ -185,10 +189,11 @@ function initializeSockets() {
             case "request-snapshot": {
                 if (!game.user.isGM) break;
                 console.log("[ConvoUI] Received request-snapshot")
-                game.socket.emit(SOCKCHANNEL, { 
-                    t: "convo-sync", 
-                    convo: JSON.stringify(game.krisconvoui.conversation) 
-                });
+                // Goes through broadcastConversation() rather than emitting
+                // the raw conversation directly, so a newly-joined player
+                // gets the same redaction of unrevealed participants as
+                // everyone else.
+                convoData.broadcastConversation();
                 break;
             }
             case "discord-speakers": {
@@ -210,43 +215,5 @@ function initializeSockets() {
         game.socket.emit(SOCKCHANNEL,
             { t: "request-snapshot" }
         );
-    }
-}
-
-export function propagateConversation() {
-    const gm_convo = game.krisconvoui.conversation;
-
-    if (gm_convo !== null) {
-        const flattened_convo = {
-            speaker: gm_convo.speaker,
-            background: gm_convo.background,
-            participants: []
-        }
-
-        gm_convo.participants.forEach(p => {
-            if (p.isRevealed) {
-                flattened_convo.participants.push({
-                    name: p.getName(),
-                    image: p.getImage(),
-                    actor: p.actor
-                });
-            }
-        });
-
-        const SOCKCHANNEL = game.krisconvoui.SOCKCHANNEL
-        console.log("[ConvoUI] Emitted convo-sync")
-        console.log(flattened_convo)
-        game.socket.emit(SOCKCHANNEL, {
-            t: "convo-sync", 
-            convo: JSON.stringify(flattened_convo)
-        });
-    }
-    else {
-        const SOCKCHANNEL = game.krisconvoui.SOCKCHANNEL
-        console.log("[ConvoUI] Emitted convo-sync: Null")
-        game.socket.emit(SOCKCHANNEL, {
-            t: "convo-sync", 
-            convo: JSON.stringify(null)
-        });
     }
 }

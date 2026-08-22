@@ -1,7 +1,43 @@
-import { Participant, Conversation, SaveConversation, LoadConversationById } from "./convodata.mjs";
+import { Participant, Conversation, SaveConversation, LoadConversationById, broadcastConversation, getConvoJournals } from "./convodata.mjs";
 import { updateConvoUI } from "./convoui.mjs";
-import { propagateConversation, updateButtonUI } from "./main.mjs"
+import { updateButtonUI } from "./main.mjs"
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+/**
+ * Buckets flat "participants[N][field]" form keys into an ordered array
+ * of participant data. isRevealed defaults false: an unchecked checkbox
+ * is omitted from form data entirely, so absence here means "unchecked",
+ * not "unset".
+ */
+function parseParticipantsFromFormData(data) {
+  const participantsByIndex = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    const match = key.match(/^participants\[(\d+)\]\[(\w+)\]$/);
+    if (!match) continue;
+
+    const [, indexStr, field] = match;
+    const index = Number(indexStr);
+
+    if (!participantsByIndex[index]) {
+      participantsByIndex[index] = { name: "", image: "", actor: "", isRevealed: false };
+    }
+
+    participantsByIndex[index][field] = value;
+  }
+
+  return Object.keys(participantsByIndex)
+    .sort((a, b) => Number(a) - Number(b))
+    .map(i => {
+      const p = participantsByIndex[i];
+      return {
+        name: (p.name ?? "").trim(),
+        image: p.image || "",
+        actor: p.actor || "",
+        isRevealed: Boolean(p.isRevealed)
+      };
+    });
+}
 
 export class CreateConversationForm extends HandlebarsApplicationMixin(ApplicationV2) {
   /** Initial draft state lives on the instance so we can re-render as user adds/removes participants */
@@ -127,40 +163,7 @@ _syncDraftFromForm() {
 
 
   // --- Reconstruct participants manually from flat keys ---
-
-  // We'll build a temporary map: index -> participant data
-  const participantsByIndex = {};
-
-  for (const [key, value] of Object.entries(obj)) {
-    // We only care about keys like 'participants[NUMBER][FIELD]'
-    // Example match: 'participants[0][name]'
-    const match = key.match(/^participants\[(\d+)\]\[(\w+)\]$/);
-    if (!match) continue;
-
-    const [, indexStr, field] = match;
-    const index = Number(indexStr);
-
-    if (!participantsByIndex[index]) {
-      // isRevealed defaults false: an unchecked checkbox is omitted from
-      // form data entirely, so absence here means "unchecked", not "unset"
-      participantsByIndex[index] = { name: "", image: "", actor: "", isRevealed: false };
-    }
-
-    participantsByIndex[index][field] = value;
-  }
-
-  // Turn that map into an ordered array (0,1,2,...)
-  const rebuiltParticipants = Object.keys(participantsByIndex)
-    .sort((a, b) => Number(a) - Number(b))
-    .map(i => {
-      const p = participantsByIndex[i];
-      return {
-        name: (p.name ?? "").trim(),
-        image: p.image || "",
-        actor: p.actor || "",
-        isRevealed: Boolean(p.isRevealed)
-      };
-    });
+  const rebuiltParticipants = parseParticipantsFromFormData(obj);
 
   // Only update draft.participants if we actually found any rows in the DOM.
   // This prevents us from wiping the draft on the first ever + click.
@@ -225,38 +228,10 @@ static async _handleSubmit(event, form, formData) {
     newConversation.name = data.name ?? ""
     const needsName = newConversation.name === ""
 
-    const participantsByIndex = {};
-
-    for (const [key, value] of Object.entries(data)) {
-      // match keys like "participants[0][name]"
-      const match = key.match(/^participants\[(\d+)\]\[(\w+)\]$/);
-      if (!match) continue;
-
-      const [, indexStr, field] = match;
-      const index = Number(indexStr);
-
-      if (!participantsByIndex[index]) {
-        // isRevealed defaults false: an unchecked checkbox is omitted from
-        // form data entirely, so absence here means "unchecked", not "unset"
-        participantsByIndex[index] = {
-          name: "",
-          image: "",
-          actor: "",
-          isRevealed: false
-        };
-      }
-
-      participantsByIndex[index][field] = value;
-    }
-
-    const participantsArray = Object.keys(participantsByIndex)
-      .sort((a, b) => Number(a) - Number(b))
-      .map(i => participantsByIndex[i]);
+    const participantsArray = parseParticipantsFromFormData(data);
 
     participantsArray.forEach(p => {
-      const name = (p.name ?? "").trim();
-
-      const participant = new Participant(name, p.image || "", p.actor || "");
+      const participant = new Participant(p.name, p.image, p.actor);
       participant.isRevealed = p.isRevealed;
       newConversation.participants.push(participant);
       if (needsName) {
@@ -275,11 +250,10 @@ static async _handleSubmit(event, form, formData) {
     }
 
     game.krisconvoui.conversation = newConversation;
-    const saved = await SaveConversation(newConversation);
+    // SaveConversation() broadcasts internally, no separate call needed
+    await SaveConversation(newConversation);
     updateConvoUI()
     updateButtonUI()
-
-    propagateConversation()
   }
 }
 
@@ -319,13 +293,9 @@ export class LoadConversationForm extends HandlebarsApplicationMixin(Application
    * This re-runs whenever the app renders.
    */
   async _prepareContext() {
-    const MOD = game.krisconvoui.MODULE;
-
     // find all journal pages flagged as convo-data
     const conversations = [];
-    for (const j of game.journal.contents) {
-      if (j.flags?.[MOD]?.type !== "convo-data") continue;
-
+    for (const j of getConvoJournals()) {
       for (const p of j.pages) {
         // each page is one conversation chunk
         conversations.push({
@@ -378,6 +348,9 @@ export class LoadConversationForm extends HandlebarsApplicationMixin(Application
     updateConvoUI()
     updateButtonUI()
 
-    propagateConversation()
+    // LoadConversationById() doesn't go through SaveConversation(), so
+    // unlike most other conversation changes this one needs an explicit
+    // broadcast to sync players onto the newly-loaded conversation.
+    broadcastConversation()
   }
 }

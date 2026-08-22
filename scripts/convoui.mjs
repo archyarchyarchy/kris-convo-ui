@@ -1,5 +1,4 @@
 import { Participant, Conversation, LoadConversationById } from "./convodata.mjs";
-import { propagateConversation } from "./main.mjs";
 import { openSheetForName } from "./sheetlookup.mjs";
 
 export async function initializeConvoUI() {
@@ -244,12 +243,12 @@ export function updateConvoUI() {
 
                     topBtn.addEventListener("click", (ev) => {
                         ev.stopPropagation();
+                        // hideParticipant()/clearSpeaker() already broadcast via save()
                         conversation.hideParticipant(participant);
                         if (conversation.getSpeaker() === participant) {
                             conversation.clearSpeaker();
                         }
                         updateConvoUI();
-                        propagateConversation();
                     });
 
                     // Append last so it sits over all children
@@ -314,12 +313,12 @@ export function updateConvoUI() {
 
                     topBtn.addEventListener("click", (ev) => {
                         ev.stopPropagation();
+                        // revealParticipant()/clearSpeaker() already broadcast via save()
                         conversation.revealParticipant(participant);
                         if (conversation.getSpeaker() === participant) {
                             conversation.clearSpeaker();
                         }
                         updateConvoUI();
-                        propagateConversation();
                     });
 
                     // Append last so it sits over all children
