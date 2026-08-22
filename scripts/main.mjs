@@ -81,7 +81,7 @@ Hooks.once("ready", () => {
                 }
             }
 
-            partyUI.updatePartyUI()
+            partyUI.refreshSpeakingIndicators()
             game.socket.emit(SOCKCHANNEL, { t: "discord-speakers", data: JSON.stringify(game.krisconvoui.partySpeakers) });
         });
 
@@ -197,7 +197,7 @@ function initializeSockets() {
 
                 if (parsed != null && game.krisconvoui.partySpeakers != parsed) {
                     game.krisconvoui.partySpeakers = parsed
-                    partyUI.updatePartyUI()
+                    partyUI.refreshSpeakingIndicators()
                 }
                 
                 break;

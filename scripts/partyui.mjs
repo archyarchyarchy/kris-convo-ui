@@ -127,11 +127,27 @@ export function updatePartyUI() {
     party_toggle.style.pointerEvents = "all";
     party_wrapper.appendChild(party_toggle);
 
-    party_toggle.addEventListener('click', () => { 
-        game.krisconvoui.partyIsCollapsed = !game.krisconvoui.partyIsCollapsed; 
+    party_toggle.addEventListener('click', () => {
+        game.krisconvoui.partyIsCollapsed = !game.krisconvoui.partyIsCollapsed;
         updatePartyUI();
     });
 };
+
+/**
+ * Toggles the "currently speaking" indicator on existing party cards
+ * without rebuilding the party HUD. Cheaper than updatePartyUI() for
+ * the high-frequency start/stop events relayed from the Discord bot,
+ * which don't change who's in the party, only who's speaking.
+ */
+export function refreshSpeakingIndicators() {
+    const party_wrapper = document.getElementById('convoui-party-wrapper');
+    if (!party_wrapper) return;
+
+    party_wrapper.querySelectorAll('[id^="convoui-"]').forEach(card => {
+        const actorId = card.id.slice("convoui-".length);
+        card.classList.toggle("convoui-silent", !game.krisconvoui.partySpeakers.includes(actorId));
+    });
+}
 
 export function showDiceRoll(message) {
     // Only handle rolls
