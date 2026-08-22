@@ -228,7 +228,7 @@ export function propagateConversation() {
                 flattened_convo.participants.push({
                     name: p.getName(),
                     image: p.getImage(),
-                    actor: ""
+                    actor: p.actor
                 });
             }
         });
