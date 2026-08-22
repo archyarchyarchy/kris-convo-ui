@@ -1,3 +1,14 @@
+function requireGM(fnName) {
+    if (game.user.isGM) return true;
+    console.error(`${fnName}() was accessed by a player!`);
+    return false;
+}
+
+function getConvoJournals() {
+    const MOD = game.krisconvoui.MODULE;
+    return game.journal.contents.filter(j => j.flags?.[MOD]?.type === "convo-data");
+}
+
 export class Participant {
   constructor(name, image, actor = "", conversation) {
     this.name = name;
@@ -118,12 +129,9 @@ export class Conversation {
 }
 
 export async function SaveConversation(conversation) {
-    if (!game.user.isGM) {
-        console.error("SaveConversation() was accessed by a player!"); 
-        return null
-    }
-    else if (conversation == null) {
-        console.error("[ConvoUI] SaveConversation(): Attempted to save an Undefined conversation"); 
+    if (!requireGM("SaveConversation")) return null;
+    if (conversation == null) {
+        console.error("[ConvoUI] SaveConversation(): Attempted to save an Undefined conversation");
         return null
     }
 
@@ -134,9 +142,9 @@ export async function SaveConversation(conversation) {
 
     if (!entry) {
         console.log("[ConvoUI] SaveConversation(): No ConvoUI Journal found, creating it.")
-        entry = await JournalEntry.create({ 
+        entry = await JournalEntry.create({
             name: "ConvoUI",
-            flags: { "kris-convo-ui": { type: "convo-data" } },
+            flags: { [MOD]: { type: "convo-data" } },
             ownership: { [game.user.id]: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER },
         });
     }
@@ -145,9 +153,7 @@ export async function SaveConversation(conversation) {
     if (conversation.id != -1) {
         console.log("[ConvoUI] SaveConversation(): Conversation has ID " + conversation.id + ", looking for matching page...")
 
-        const journals = game.journal.contents.filter(j => j.flags?.[MOD]?.type === "convo-data")
-
-        for (const j of journals) {
+        for (const j of getConvoJournals()) {
             for (const p of j.pages) {
                 if (p.id === conversation.id) {
                     page = p;
@@ -163,14 +169,14 @@ export async function SaveConversation(conversation) {
         page = await JournalEntryPage.create({
             name: "Saving...",
             text: { content: "" },
-            flags: { "kris-convo-ui": { type: "convo-data" } }
+            flags: { [MOD]: { type: "convo-data" } }
         }, { parent: entry });
 
         conversation.id = page.id
         console.log("[ConvoUI] SaveConversation(): No Page found, created a new one: " + page.id)
     }
 
-    await page.update({ 
+    await page.update({
         name: conversation.name == "" ? "Unnamed": conversation.name,
         text: { content: JSON.stringify(conversation) },
     });
@@ -183,10 +189,7 @@ export async function SaveConversation(conversation) {
 }
 
 export function LoadConversation(page) {
-    if (!game.user.isGM) {
-        console.error("LoadConversation() was accessed by a player!"); 
-        return null
-    }
+    if (!requireGM("LoadConversation")) return null;
 
     if (!page) {
         console.error("[ConvoUI] LoadConversation(): Conversation data not found.");
@@ -203,16 +206,10 @@ export function LoadConversation(page) {
 }
 
 export function LoadConversationById(id) {
-    if (!game.user.isGM) {
-        console.error("LoadConversationById() was accessed by a player!"); 
-        return null
-    }
+    if (!requireGM("LoadConversationById")) return null;
 
-    const MOD = game.krisconvoui.MODULE
     var matches = []
-    const journals = game.journal.contents.filter(j => j.flags?.[MOD]?.type === "convo-data")
-
-    journals.forEach(j => {
+    getConvoJournals().forEach(j => {
         j.pages.forEach(p => {
             if (p.id == id) {
                 matches.push(p)
@@ -230,21 +227,11 @@ export function LoadConversationById(id) {
 }
 
 export function LoadConversationByName(name) {
-    if (!game.user.isGM) {
-        console.error("LoadConversationByName() was accessed by a player!"); 
-        return null
-    }
+    if (!requireGM("LoadConversationByName")) return null;
 
-    const MOD = game.krisconvoui.MODULE
     var matches = []
-    const journals = game.journal.contents.filter(j => j.flags?.[MOD] && j.flags[MOD].type === "convo-data")
-    //console.log(MOD)
-
-    journals.forEach(j => {
-        //console.log(j.name)
-        //console.log(j.flags)
+    getConvoJournals().forEach(j => {
         j.pages.forEach(p => {
-            //console.log("- " + p.name)
             if (p.name == name) {
                 matches.push(p)
             }
@@ -261,17 +248,10 @@ export function LoadConversationByName(name) {
 }
 
 export function GetConversations() {
-    if (!game.user.isGM) {
-        console.error("GetConversations() was accessed by a player!"); 
-        return null
-    }
+    if (!requireGM("GetConversations")) return null;
 
-    const MOD = game.krisconvoui.MODULE
-    
     var matches = []
-    const journals = game.journal.contents.filter(j => j.flags?.[MOD]?.type === "convo-data")
-
-    journals.forEach(j => {
+    getConvoJournals().forEach(j => {
         j.pages.forEach(p => {
             matches.push(p)
         });
@@ -281,17 +261,11 @@ export function GetConversations() {
 }
 
 export async function DeleteConversationById(id) {
-    if (!game.user.isGM) {
-        console.error("DeleteConversationById() was accessed by a player!");
-        return false;
-    }
-
-    const MOD = game.krisconvoui.MODULE;
-    const journals = game.journal.contents.filter(j => j.flags?.[MOD]?.type === "convo-data");
+    if (!requireGM("DeleteConversationById")) return false;
 
     // Find all pages with a matching ID
     const matches = [];
-    for (const j of journals) {
+    for (const j of getConvoJournals()) {
         for (const p of j.pages) {
             if (p.id === id) matches.push(p);
         }
