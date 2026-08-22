@@ -1,5 +1,6 @@
 import { Participant, Conversation, LoadConversationById } from "./convodata.mjs";
 import { propagateConversation } from "./main.mjs";
+import { openSheetForName } from "./sheetlookup.mjs";
 
 export async function initializeConvoUI() {
     const MOD = game.krisconvoui.MODULE
@@ -134,33 +135,12 @@ export function updateConvoUI() {
             banner_element.textContent = speaker.getName();
             speaker_card.appendChild(banner_element);
 
-            banner_element.addEventListener('click', (event) => { 
+            banner_element.addEventListener('click', (event) => {
                 const speaker = game.krisconvoui.conversation.getSpeaker();
+                if (!speaker) return;
 
-                if (speaker) {
-                    const actor = fromUuidSync(speaker.actor);
-
-                    if (actor && actor.testUserPermission(game.user, "LIMITED")) {
-                        event.preventDefault();
-                        actor.sheet.render(true);
-                    }
-                    else {
-                        const journals = game.journal.contents.filter(j => j.name.toLowerCase().replace(' ', '') === speaker.getName().toLowerCase().replace(' ', ''));
-                        var hasFound = false;
-
-                        journals.forEach(journal => {
-                            if (!hasFound) {
-                                const canObserve = journal.testUserPermission(game.user, "LIMITED");
-
-                                if (canObserve) {
-                                    event.preventDefault();
-                                    journal.sheet.render(true);
-                                    hasFound = true;
-                                }
-                            }
-                        });
-                    }
-                }
+                const actor = fromUuidSync(speaker.actor);
+                openSheetForName(event, actor, speaker.getName());
             });
         }
         else {
@@ -267,53 +247,8 @@ export function updateConvoUI() {
                 const thisParticipant = participant;
 
                 banner_element.addEventListener('click', (event) => {
-                    // TODO: See if we can store info on the element, then apply this event listener once?
-                    //const actorId = character_card.dataset.actor;
-                    //const titleToLookFor = character_card.dataset.name.toLowerCase().replace(' ', '');
                     const actor = fromUuidSync(thisParticipant.actor);
-                    const titleToLookFor = thisParticipant.getName().toLowerCase().replace(' ', '');
-                    var hasFound = false;
-
-                    if (actor) {
-                        if (actor.testUserPermission(game.user, "LIMITED")) {
-                            event.preventDefault();
-                            actor.sheet.render(true);
-                            hasFound = true;
-                        }
-                    }
-                    
-                    if (!hasFound) {
-                        const journals = game.journal.contents.filter(j => j.name.toLowerCase().replace(/\s+/g, '') === titleToLookFor);
-
-                        for (const journal of journals) {
-                            if (hasFound) break;
-
-                            const canObserve = journal.testUserPermission(game.user, "LIMITED");
-
-                            if (canObserve) {
-                                event.preventDefault();
-                                journal.sheet.render(true);
-                                hasFound = true;
-                            }
-                        }
-                    }
-                    
-                    if (!hasFound) {
-                        const pages = game.journal.contents.flatMap(j => j.pages.contents);
-
-                        for (const page of pages) {
-                            if (hasFound) break;
-
-                            const pageName = page.name.toLowerCase().replace(/\s+/g, '');
-                            const canObserve = page.testUserPermission(game.user, "LIMITED");
-
-                            if (pageName === titleToLookFor && canObserve) {
-                                event.preventDefault();
-                                page.parent.sheet.render(true, { pageId: page.id }); // Open Journal on Page
-                                hasFound = true;
-                            }
-                        }
-                    }
+                    openSheetForName(event, actor, thisParticipant.getName());
                 });
             }
         });
@@ -366,53 +301,8 @@ export function updateConvoUI() {
 
                     // Add click listener to banner
                     banner_element.addEventListener('click', (event) => {
-                        // TODO: See if we can store info on the element, then apply this event listener once?
-                        //const actorId = character_card.dataset.actor;
-                        //const titleToLookFor = character_card.dataset.name.toLowerCase().replace(' ', '');
                         const actor = fromUuidSync(thisParticipant.actor);
-                        const titleToLookFor = thisParticipant.getName().toLowerCase().replace(' ', '');
-                        var hasFound = false;
-
-                        if (actor) {
-                            if (actor.testUserPermission(game.user, "LIMITED")) {
-                                event.preventDefault();
-                                actor.sheet.render(true);
-                                hasFound = true;
-                            }
-                        }
-                        
-                        if (!hasFound) {
-                            const journals = game.journal.contents.filter(j => j.name.toLowerCase().replace(/\s+/g, '') === titleToLookFor);
-
-                            for (const journal of journals) {
-                                if (hasFound) break;
-
-                                const canObserve = journal.testUserPermission(game.user, "LIMITED");
-
-                                if (canObserve) {
-                                    event.preventDefault();
-                                    journal.sheet.render(true);
-                                    hasFound = true;
-                                }
-                            }
-                        }
-                        
-                        if (!hasFound) {
-                            const pages = game.journal.contents.flatMap(j => j.pages.contents);
-
-                            for (const page of pages) {
-                                if (hasFound) break;
-
-                                const pageName = page.name.toLowerCase().replace(/\s+/g, '');
-                                const canObserve = page.testUserPermission(game.user, "LIMITED");
-
-                                if (pageName === titleToLookFor && canObserve) {
-                                    event.preventDefault();
-                                    page.parent.sheet.render(true, { pageId: page.id }); // Open Journal on Page
-                                    hasFound = true;
-                                }
-                            }
-                        }
+                        openSheetForName(event, actor, thisParticipant.getName());
                     });
                 }
             });

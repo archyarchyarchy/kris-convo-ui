@@ -1,3 +1,5 @@
+import { openSheetForName } from "./sheetlookup.mjs";
+
 export function initializePartyUI() {
     if (!game.krisconvoui.FLAG_USE_PARTYUI) return;
 
@@ -108,51 +110,8 @@ export function updatePartyUI() {
 
         const enableSheetClick = game.settings.get(MOD, "enableSheetClick");
         if (enableSheetClick) {
-            character_card.addEventListener('click', (event) => { 
-                var hasFound = false;
-                const titleToLookFor = actor.name.toLowerCase().replace(' ', '')
-
-                if (actor) {
-                    if (actor.testUserPermission(game.user, "LIMITED")) {
-                        event.preventDefault();
-                        actor.sheet.render(true);
-                        hasFound = true;
-                    }
-                }
-                else {
-                    const journals = game.journal.contents.filter(j => j.name.toLowerCase().replace(/\s+/g, '') === titleToLookFor);
-
-                    journals.forEach(journal => {
-                        if (!hasFound) {
-                            const canObserve = journal.testUserPermission(game.user, "LIMITED");
-
-                            if (canObserve) {
-                                event.preventDefault();
-                                journal.sheet.render(true);
-                                hasFound = true;
-                            }
-                        }
-                    });
-                }
-                
-                if (!hasFound) {
-                    const pages = game.journal.contents.flatMap(j => j.pages.contents);
-                    console.log(pages)
-
-                    for (const page of pages) {
-                        if (hasFound) break;
-
-                        const canObserve = page.testUserPermission(game.user, "LIMITED");
-                        const pageName = page.name.toLowerCase().replace(/\s+/g, '');
-
-                        if (pageName === titleToLookFor && canObserve) {
-                            event.preventDefault();
-                            page.parent.sheet.render(true, { pageId: page.id }); // Journal with Page
-                            //page.sheet.render(true); // Just Page
-                            hasFound = true;
-                        }
-                    }
-                }
+            character_card.addEventListener('click', (event) => {
+                openSheetForName(event, actor, actor.name);
             });
         }
     });
